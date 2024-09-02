@@ -1,0 +1,6 @@
+@CallingService_HostAddress = http://localhost:5273
+
+GET {{CallingService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
