@@ -1,4 +1,7 @@
-using System.Net.Http;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +9,26 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddOpenTelemetry()
+      .ConfigureResource(resource => resource.AddService("service-caller"))
+      .WithTracing(tracing => tracing
+          .AddAspNetCoreInstrumentation()
+          .AddConsoleExporter())
+      .WithMetrics(metrics => metrics
+          .AddAspNetCoreInstrumentation()
+          .AddConsoleExporter());
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options
+        .SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService("service-caller"))
+        .AddConsoleExporter();
+});
+
+
 
 var app = builder.Build();
 
