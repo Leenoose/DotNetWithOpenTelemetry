@@ -22,7 +22,8 @@ app.UseHttpsRedirection();
 
 app.MapGet("/postgresql", async () =>
 {
-    string connectionString = "Host=localhost;Username=yourusername;Password=yourpassword;Database=yourdatabase";
+    string connectionString = Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING")
+        ?? throw new InvalidOperationException("Connection string not found in environment variables.");
 
     await using var conn = new NpgsqlConnection(connectionString);
     await conn.OpenAsync();
@@ -38,7 +39,8 @@ app.MapGet("/postgresql", async () =>
 
 app.MapGet("/mysql", async () =>
 {
-    string connectionString = "Server=localhost;Database=yourdatabase;User=yourusername;Password=yourpassword;";
+    string connectionString = Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING")
+        ?? throw new InvalidOperationException("Connection string not found in environment variables.");
 
     await using var conn = new MySqlConnection(connectionString);
     await conn.OpenAsync();
