@@ -10,23 +10,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddOpenTelemetry()
-      .ConfigureResource(resource => resource.AddService("service-caller"))
-      .WithTracing(tracing => tracing
-          .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter())
-      .WithMetrics(metrics => metrics
-          .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter());
+string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
 
-builder.Logging.AddOpenTelemetry(options =>
-{
-    options
-        .SetResourceBuilder(
-            ResourceBuilder.CreateDefault()
-                .AddService("service-caller"))
-        .AddConsoleExporter();
-});
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CallingService"))
+            .AddAspNetCoreInstrumentation()  // Automatically trace incoming HTTP requests to ASP.NET Core
+            .AddHttpClientInstrumentation()  // Automatically trace outgoing HTTP requests from HttpClient
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
+                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;  // Default protocol
+            })
+            .SetSampler(new AlwaysOnSampler());  // Adjust the sampling rate if necessary (AlwaysOnSampler sends all traces)
+    });
+
+
 
 
 
