@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "jaeger-all-in-one-inmemory-collector.dotnettrace.svc.cluster.local:4317";
+string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "jaeger-all-in-one-inmemory-collector.dotnettrace.svc.cluster.local:4318";
 
 
 builder.Services.AddOpenTelemetry()
@@ -27,7 +27,7 @@ builder.Services.AddOpenTelemetry()
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
-                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;  // Default protocol
+                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HTTP;  // Default protocol
             })
             .SetSampler(new AlwaysOnSampler());  // Adjust the sampling rate if necessary (AlwaysOnSampler sends all traces)
     });
@@ -48,7 +48,7 @@ app.UseHttpsRedirection();
 
 app.MapGet("/helloworld", () =>
 {
-    return "Test";
+    return otlpEndpoint;
 })
 .WithName("HelloWorld")
 .WithOpenApi();
