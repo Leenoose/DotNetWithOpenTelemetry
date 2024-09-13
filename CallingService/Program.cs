@@ -27,7 +27,7 @@ builder.Services.AddOpenTelemetry()
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
-                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HTTP;  // Default protocol
+                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;  // Default protocol
             })
             .SetSampler(new AlwaysOnSampler());  // Adjust the sampling rate if necessary (AlwaysOnSampler sends all traces)
     });
