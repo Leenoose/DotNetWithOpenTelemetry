@@ -23,10 +23,7 @@ builder.Services.AddOpenTelemetry()
             .AddHttpClientInstrumentation()  // Automatically trace outgoing HTTP requests from HttpClient
             .AddOtlpExporter(options =>
             {
-                options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
-                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;  // Default protocol
-                // options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;  // HTTP protDefaultocol
-                
+                options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables                
             })
             .SetSampler(new AlwaysOnSampler());  // Adjust the sampling rate if necessary (AlwaysOnSampler sends all traces)
     });
