@@ -18,12 +18,9 @@ builder.Services.AddOpenTelemetry()
     {
         tracerProviderBuilder
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-                serviceName: "CallingService",      
-                serviceVersion: "1.0.0"))
-            .AddSource("OpenTelemetry.Demo.Jaeger")  
+                serviceName: "CallingService"))
             .AddAspNetCoreInstrumentation()  // Automatically trace incoming HTTP requests to ASP.NET Core
             .AddHttpClientInstrumentation()  // Automatically trace outgoing HTTP requests from HttpClient
-            .AddConsoleExporter()  // Export traces to the console
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
