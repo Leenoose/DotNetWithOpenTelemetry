@@ -1,3 +1,4 @@
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -19,19 +20,16 @@ builder.Logging.AddOpenTelemetry(options =>
     options
         .SetResourceBuilder(
             ResourceBuilder.CreateDefault()
-                .AddService(serviceName))
-        .AddConsoleExporter();
+                .AddService(serviceName));
 });
 builder.Services.AddOpenTelemetry()
       .ConfigureResource(resource => resource.AddService(serviceName))
       .WithTracing(tracing => tracing
-          .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter())
+          .AddAspNetCoreInstrumentation())
       .WithMetrics(metrics => metrics
-          .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter());
-
-
+          .AddAspNetCoreInstrumentation())
+      .UseOtlpExporter();
+      ;
 
 
 
