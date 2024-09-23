@@ -1,4 +1,5 @@
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -25,12 +26,16 @@ builder.Logging.AddOpenTelemetry(options =>
 builder.Services.AddOpenTelemetry()
       .ConfigureResource(resource => resource.AddService(serviceName))
       .WithTracing(tracing => tracing
-          .AddAspNetCoreInstrumentation())
+          .AddAspNetCoreInstrumentation().AddOtlpExporter(
+          options =>
+            {
+                options.Endpoint = new Uri(otlpEndpoint);
+                options.Protocol = OtlpExportProtocol.Grpc;
+            }
+          ))
       .WithMetrics(metrics => metrics
           .AddAspNetCoreInstrumentation())
       .UseOtlpExporter();
-      ;
-
 
 
 
