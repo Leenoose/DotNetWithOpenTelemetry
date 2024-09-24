@@ -12,36 +12,44 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "localhost:4317";
+string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
 
 const string serviceName = "callingService";
 
-builder.Logging.AddOpenTelemetry(options =>
-{
-    options
-        .SetResourceBuilder(
-            ResourceBuilder.CreateDefault()
-                .AddService(serviceName));
-});
 builder.Services.AddOpenTelemetry()
-      .ConfigureResource(resource => resource.AddService(serviceName))
-      .WithTracing(tracing => tracing
-          .AddAspNetCoreInstrumentation().AddOtlpExporter(
-          options =>
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
+            .AddAspNetCoreInstrumentation()  // Automatically trace incoming HTTP requests to ASP.NET Core
+            .AddHttpClientInstrumentation()  // Automatically trace outgoing HTTP requests from HttpClient
+            .AddOtlpExporter(options =>
             {
-                options.Endpoint = new Uri(otlpEndpoint);
-                options.Protocol = OtlpExportProtocol.Grpc;
-            }
-          ))
-      .WithMetrics(metrics => metrics
-          .AddAspNetCoreInstrumentation().AddOtlpExporter(
-          options =>
-          {
-              options.Endpoint = new Uri(otlpEndpoint);
-              options.Protocol = OtlpExportProtocol.Grpc;
-          }
-          ))
-      .UseOtlpExporter();
+                options.Endpoint = new Uri(otlpEndpoint);  // Set OTLP endpoint (by default Jaeger's gRPC endpoint)
+                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;  // gRPC is the preferred protocol
+            })
+            .SetSampler(new AlwaysOnSampler());  // Always sample for testing purposes
+    });
+
+
+//builder.Services.AddOpenTelemetry()
+//      .ConfigureResource(resource => resource.AddService(serviceName))
+//      .WithTracing(tracing => tracing
+//          .AddAspNetCoreInstrumentation().AddOtlpExporter(
+//          options =>
+//            {
+//                options.Endpoint = new Uri(otlpEndpoint);
+//                options.Protocol = OtlpExportProtocol.Grpc;
+//            }
+//          ))
+//      .WithMetrics(metrics => metrics
+//          .AddAspNetCoreInstrumentation().AddOtlpExporter(
+//          options =>
+//          {
+//              options.Endpoint = new Uri(otlpEndpoint);
+//              options.Protocol = OtlpExportProtocol.Grpc;
+//          }
+//          ));
 
 
 
