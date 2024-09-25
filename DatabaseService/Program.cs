@@ -52,7 +52,14 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-
+using (var scope = app.Services.CreateScope())
+{
+    var dbContexts = scope.ServiceProvider.GetServices<DbContext>();
+    foreach (var context in dbContexts)
+    {
+        context.Database.Migrate();
+    }
+}
 app.UseSwagger();
 app.UseSwaggerUI();
 
