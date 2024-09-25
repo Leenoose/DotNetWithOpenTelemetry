@@ -90,6 +90,19 @@ app.MapGet("/mysql", async (MySqlDbContext dbContext) =>
 })
 .WithOpenApi();
 
+app.MapPost("/create-tables", async (PostgresDbContext postgresDbContext, MySqlDbContext mysqlDbContext) =>
+{
+    // Create PostgreSQL table
+    await postgresDbContext.Database.EnsureCreatedAsync();
+
+    // Create MySQL table
+    await mysqlDbContext.Database.EnsureCreatedAsync();
+
+    return Results.Ok("Tables created successfully.");
+}).WithOpenApi();
+
+
+
 app.Run();
 
 public class PostgresDbContext : DbContext
