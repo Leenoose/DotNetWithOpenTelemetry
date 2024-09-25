@@ -1,20 +1,34 @@
-using Npgsql;
-using MySql.Data.MySqlClient;
+
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Microsoft.EntityFrameworkCore;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+string postgresConnectionString = Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING")
+    ?? throw new InvalidOperationException("Connection string not found in environment variables.");
+
+string mySqlConnectionString = Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING")
+    ?? throw new InvalidOperationException("Connection string not found in environment variables.");
+
+
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+builder.Services.AddDbContext<PostgresDbContext>(options => options.UseNpgsql(postgresConnectionString));
+builder.Services.AddDbContext<MySqlDbContext>(options => options.UseMySQL(mySqlConnectionString));
+
+
 string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
+
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
@@ -46,37 +60,50 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 
-app.MapGet("/postgresql", async () =>
+app.MapGet("/postgresql", async (PostgresDbContext dbContext) =>
 {
-    string connectionString = Environment.GetEnvironmentVariable("POSTGRESQL_CONNECTION_STRING")
-        ?? throw new InvalidOperationException("Connection string not found in environment variables.");
+    dbContext.test.Add(new Test { Message = "Hello, PostgreSQL!" });
+    await dbContext.SaveChangesAsync();
 
-    await using var conn = new NpgsqlConnection(connectionString);
-    await conn.OpenAsync();
-
-    using (var cmd = new NpgsqlCommand("SELECT 'Hello, PostgreSQL!'", conn))
-    {
-        var result = await cmd.ExecuteScalarAsync();
-        return Results.Ok(result?.ToString());
-    }
+    // Fetch data from the database
+    var greeting = await dbContext.test.FirstOrDefaultAsync();
+    return Results.Ok(greeting?.Message);
 
 })
 .WithOpenApi();
 
-app.MapGet("/mysql", async () =>
+app.MapGet("/mysql", async (MySqlDbContext dbContext) =>
 {
-    string connectionString = Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING")
-        ?? throw new InvalidOperationException("Connection string not found in environment variables.");
+    dbContext.test.Add(new Test { Message = "Hello, MySQL!" });
+    await dbContext.SaveChangesAsync();
 
-    await using var conn = new MySqlConnection(connectionString);
-    await conn.OpenAsync();
-
-    using (var cmd = new MySqlCommand("SELECT 'Hello, MySQL!'", conn))
-    {
-        var result = await cmd.ExecuteScalarAsync();
-        return Results.Ok(result?.ToString());
-    }
+    // Fetch data from the database
+    var greeting = await dbContext.test.FirstOrDefaultAsync();
+    return Results.Ok(greeting?.Message);
 })
 .WithOpenApi();
 
 app.Run();
+
+public class PostgresDbContext : DbContext
+{
+    public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<Test> test { get; set; }
+}
+
+public class MySqlDbContext : DbContext {
+    public MySqlDbContext(DbContextOptions<MySqlDbContext> options) : base(options)
+    {
+    }
+    public DbSet<Test> test { get; set; }
+
+}
+
+public class Test
+{
+    public int Id { get; set; }
+    public string Message { get; set; }
+}
