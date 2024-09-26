@@ -103,6 +103,39 @@ app.MapPost("/create-tables", async (PostgresDbContext postgresDbContext, MySqlD
     return Results.Ok("Tables created successfully.");
 }).WithOpenApi();
 
+app.MapPost("/postgres-error", async (PostgresDbContext dbContext) =>
+{
+    try
+    {
+        // Attempt to insert into a table that does not exist
+        dbContext.errorTable.Add(new ErrorTable { Name = "Test Entry" });
+        await dbContext.SaveChangesAsync();  // This will throw an exception
+        return Results.Ok("Data inserted successfully.");
+    }
+    catch (Exception ex)
+    {
+        // Catch and return the database error
+        return Results.Problem($"Database error: {ex.Message}");
+    }
+
+}).WithOpenApi();
+
+
+app.MapPost("/mysql-error", async (MySqlDbContext dbContext) =>
+{
+    try
+    {
+        // Attempt to insert into a table that does not exist
+        dbContext.errorTable.Add(new ErrorTable { Name = "Test Entry" });
+        await dbContext.SaveChangesAsync();  // This will throw an exception
+        return Results.Ok("Data inserted successfully.");
+    }
+    catch (Exception ex)
+    {
+        // Catch and return the database error
+        return Results.Problem($"Database error: {ex.Message}");
+    }
+}).WithOpenApi();
 
 
 app.Run();
@@ -114,6 +147,7 @@ public class PostgresDbContext : DbContext
     }
 
     public DbSet<Test> test { get; set; }
+    public DbSet<ErrorTable> errorTable { get; set; }
 }
 
 public class MySqlDbContext : DbContext {
@@ -121,11 +155,18 @@ public class MySqlDbContext : DbContext {
     {
     }
     public DbSet<Test> test { get; set; }
-
+    public DbSet<ErrorTable> errorTable { get; set; }
 }
 
 public class Test
 {
     public int Id { get; set; }
     public string Message { get; set; }
+}
+
+
+public class ErrorTable { 
+
+    public int Id { get; set; }
+    public string Name { get; set; }
 }
