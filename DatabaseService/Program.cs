@@ -3,6 +3,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Instrumentation.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -37,6 +38,7 @@ builder.Services.AddOpenTelemetry()
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("DatabaseService"))
             .AddAspNetCoreInstrumentation()  // Automatically trace incoming HTTP requests to ASP.NET Core
             .AddHttpClientInstrumentation()  // Automatically trace outgoing HTTP requests from HttpClient
+            .AddEntityFrameworkCoreInstrumentation()
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
