@@ -71,6 +71,7 @@ app.UseHttpsRedirection();
 
 app.MapGet("/postgresql", async (PostgresDbContext dbContext) =>
 {
+    Thread.Sleep(1000);
     dbContext.test.Add(new Test { Message = "Hello, PostgreSQL!" });
     await dbContext.SaveChangesAsync();
 
