@@ -39,6 +39,7 @@ builder.Services.AddOpenTelemetry()
             .AddAspNetCoreInstrumentation()  // Automatically trace incoming HTTP requests to ASP.NET Core
             .AddHttpClientInstrumentation()  // Automatically trace outgoing HTTP requests from HttpClient
             .AddEntityFrameworkCoreInstrumentation()
+            .AddConnectorNet()
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri(otlpEndpoint);  // Use the OTLP endpoint from environment variables
